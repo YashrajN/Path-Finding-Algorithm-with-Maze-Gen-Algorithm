@@ -1,5 +1,5 @@
-var cols = 21;
-var rows = 21;
+var cols = 35;
+var rows = 35;
 var grid = new Array(cols);
 var openSet = [];
 var closedSet = [];
@@ -8,7 +8,7 @@ var end;
 var w;
 var h;
 var path = [];
-var diagonal = true;
+var diagonal = false;
 var run = false;
 var neigh = true;
 var ran = false;
@@ -31,7 +31,7 @@ function Spot(i,j){
     this.show = function(col){
       fill(col);
       if(this.wall){
-        fill(0);
+        fill(30);
       }
       stroke(0);
       rect(this.i*w,this.j*h,w-1,h-1)
@@ -120,11 +120,13 @@ function ranP(){
 }
 
 function dia(){
-  diagonal = !diagonal;
+  if(!run)
+    diagonal = !diagonal;
 }
 
 function rest(){
 //   console.log("HEKLOODJS");
+  diagonal = checkbox.checked();
   input1.value(cols);
   w = width/cols;
   h = height/rows;
@@ -276,7 +278,7 @@ function setup(){
   button.mousePressed(colRow);
   
   
-  checkbox = createCheckbox('Diagonal', true);
+  checkbox = createCheckbox('Diagonal', false);
   checkbox.changed(dia);
   
   
@@ -364,7 +366,9 @@ function draw() {
         }
     }
     
-    curr.show(color(255,0,255));
+    if(maze){
+      curr.show(color(255,0,255));
+    }
     start.show(color(0,130,255));
     end.show(color(255,0,0));
   }
@@ -471,6 +475,7 @@ function draw() {
   }
 
 }
+
 
 
 
