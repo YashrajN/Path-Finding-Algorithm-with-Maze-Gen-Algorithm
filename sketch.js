@@ -221,82 +221,10 @@ function mazeGen(){
       grid[i][j].wall = true;
     }
   }
-  curr = grid[0][0];
-  
+  curr = grid[0][0]; 
 }
 
-function setup(){
-  createCanvas(450, 450);  
-  
-  w = width/cols;
-  h = height/rows;
-  //Makes the 2D array
-  for(var i = 0; i < cols; i++){
-    grid[i] = new Array(rows);
-  }
-  
-  
-  for(var i = 0; i < cols; i++){
-    for(var j = 0; j < rows; j++){
-      grid[i][j] = new Spot(i,j);
-    }
-  }
-  
-  for(var i = 0; i < cols; i++){
-    for(var j = 0; j < rows; j++){
-      grid[i][j].show(255);
-    }
-  }
-  
-  start = grid[0][0];
-  end = grid[cols - 1][rows - 1];
-  start.wall = false;
-  end.wall = false;
-  
-  openSet.push(start);
-  
-  console.log(grid);
-  let runButton = createButton("Run");
-  runButton.mousePressed(runP);
-  
-  let ranButton = createButton("Random");
-  ranButton.mousePressed(ranP);
-  
-  let mazeButton = createButton("Maze");
-  mazeButton.mousePressed(mazeGen);
-  
-  let resetButton = createButton("Reset");
-  resetButton.mousePressed(rest);
-  
-  
-  input1 = createInput();
-  input1.position(0, height + 45);
-  input1.value(cols);
-
-  button = createButton('Grid');
-  button.position(input1.x + input1.width, height + 45);
-  button.mousePressed(colRow);
-  
-  
-  checkbox = createCheckbox('Diagonal', false);
-  checkbox.changed(dia);
-  
-  
-  input2 = createInput();
-  input2.position(0, height + 70);
-  input2.value(60);
-
-  fr = createButton('Speed (fps)');
-  fr.position(input2.x + input2.width, height + 70);
-  fr.mousePressed(fps);
-  
-  curr = grid[0][0];
-  
-}
-
-function draw() {
-  // background(255);
-  
+function createMaze(){
   if(maze){
     ran = false;
     curr.visited = true;
@@ -321,8 +249,9 @@ function draw() {
       run = false;
     }
   }
-    
-  
+}
+
+function preRunSetup(){
   if(!run){
     
     if(ran){
@@ -372,7 +301,9 @@ function draw() {
     start.show(color(0,130,255));
     end.show(color(255,0,0));
   }
-  
+}
+
+function aStarAlg(){
   if(run){
     if(neigh){
       for(var i = 0; i < cols; i++){
@@ -408,7 +339,11 @@ function draw() {
       var neighbour = neighbours[i];
 
       if(!closedSet.includes(neighbour) && !neighbour.wall){
-        var tempG = current.g + 1;
+        if(diagonal){
+          var tempG = current.g + heuristic(neighbour,current);
+        }else{
+          var tempG = current.g + 1;
+        }
 
         var newPath = false;
 
@@ -473,6 +408,88 @@ function draw() {
       path[i].show(color(0,130,255));
     }
   }
+}
+
+function createInputs(){
+  let runButton = createButton("Run");
+  runButton.mousePressed(runP);
+  
+  let ranButton = createButton("Random");
+  ranButton.mousePressed(ranP);
+  
+  let mazeButton = createButton("Maze");
+  mazeButton.mousePressed(mazeGen);
+  
+  let resetButton = createButton("Reset");
+  resetButton.mousePressed(rest);
+  
+  
+  input1 = createInput();
+  input1.position(0, height + 45);
+  input1.value(cols);
+
+  button = createButton('Grid');
+  button.position(input1.x + input1.width, height + 45);
+  button.mousePressed(colRow);
+  
+  
+  checkbox = createCheckbox('Diagonal', false);
+  checkbox.changed(dia);
+  
+  
+  input2 = createInput();
+  input2.position(0, height + 70);
+  input2.value(60);
+
+  fr = createButton('Speed (fps)');
+  fr.position(input2.x + input2.width, height + 70);
+  fr.mousePressed(fps);
+}
+
+function setup(){
+  createCanvas(450, 450);  
+  
+  w = width/cols;
+  h = height/rows;
+  //Makes the 2D array
+  for(var i = 0; i < cols; i++){
+    grid[i] = new Array(rows);
+  }
+  
+  
+  for(var i = 0; i < cols; i++){
+    for(var j = 0; j < rows; j++){
+      grid[i][j] = new Spot(i,j);
+    }
+  }
+  
+  for(var i = 0; i < cols; i++){
+    for(var j = 0; j < rows; j++){
+      grid[i][j].show(255);
+    }
+  }
+  
+  start = grid[0][0];
+  end = grid[cols - 1][rows - 1];
+  start.wall = false;
+  end.wall = false;
+  
+  openSet.push(start);
+  
+  console.log(grid);
+  
+  createInputs();
+  
+}
+
+function draw() {
+  // background(255);
+  
+  createMaze();
+  
+  preRunSetup();
+  
+  aStarAlg();
 
 }
 
