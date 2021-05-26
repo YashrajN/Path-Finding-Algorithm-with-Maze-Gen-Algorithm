@@ -115,7 +115,7 @@ function runP(){
 }
 
 function ranP(){
-  rest();
+  reset();
   ran = true;
 }
 
@@ -124,7 +124,7 @@ function dia(){
     diagonal = !diagonal;
 }
 
-function rest(){
+function reset(){
 //   console.log("HEKLOODJS");
   diagonal = checkbox.checked();
   input1.value(cols);
@@ -177,7 +177,7 @@ function colRow(){
     }
     
     rows = cols;
-    rest();
+    reset();
   }
 }
 
@@ -214,7 +214,7 @@ function removeWalls(a, b){
 }
 
 function mazeGen(){
-  rest();
+  reset();
   maze = true;
   for(var i = 0; i < cols; i++){
     for(var j = 0; j < rows; j++){
@@ -304,6 +304,7 @@ function preRunSetup(){
 }
 
 function aStarAlg(){
+  
   if(run){
     if(neigh){
       for(var i = 0; i < cols; i++){
@@ -421,7 +422,7 @@ function createInputs(){
   mazeButton.mousePressed(mazeGen);
   
   let resetButton = createButton("Reset");
-  resetButton.mousePressed(rest);
+  resetButton.mousePressed(reset);
   
   
   input1 = createInput();
