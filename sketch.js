@@ -1,5 +1,9 @@
 var cols = 35;
 var rows = 35;
+var startx = 0;
+var starty = 0;
+var endx = cols -1;
+var endy = rows - 1;
 var grid = new Array(cols);
 var openSet = [];
 var closedSet = [];
@@ -17,6 +21,14 @@ var noSol = false;
 var curr;
 var maze = false;
 var stack = [];
+var aStar = true;
+var qSet = [];
+var nSet = [];
+var cSet = [];
+var sSet = [];
+var noSolD = 0;
+var infinity = 100000;
+
 function Spot(i,j){
     this.i = i;
     this.j = j;
@@ -27,6 +39,8 @@ function Spot(i,j){
     this.previous = undefined;
     this.wall = false;
     this.visited = false;
+    this.dist = infinity;
+    this.prev = undefined;
     
     this.show = function(col){
       fill(col);
@@ -51,13 +65,13 @@ function Spot(i,j){
         this.neighbours.push(grid[this.i][this.j-1]);
       }
       if(diagonal){
-        if(i > 0 && j > 0 && 9+!(grid[this.i][this.j-1].wall && grid[this.i-1][this.j].wall)){
+        if(i > 0 && j > 0 && !(grid[this.i][this.j-1].wall && grid[this.i-1][this.j].wall)){
           this.neighbours.push(grid[this.i -1][this.j-1]);
         }
         if(i < cols-1 && j > 0 && !(grid[this.i+1][this.j].wall && grid[this.i][this.j-1].wall)){
           this.neighbours.push(grid[this.i +1][this.j-1]);
         }
-        if(i > 0 && j < rows - 1 && !(grid[this.i - 1][this.j].wall && grid[this.i][this.j+1].wall)){
+        if(i > 0 && j < rows - 1 && !(grid[this.i-1][this.j].wall && grid[this.i][this.j+1].wall)){
           this.neighbours.push(grid[this.i -1][this.j+1]);
         }
         if(i < cols -1 && j < rows - 1 && !(grid[this.i][this.j+1].wall && grid[this.i+1][this.j].wall)){
@@ -119,13 +133,27 @@ function ranP(){
   ran = true;
 }
 
+function ranPos(){
+  startx = floor(random(0,cols-1));
+  starty = floor(random(0,rows-1));
+  
+  do{
+    endx = floor(random(0,cols-1));
+  }while (endx == startx)
+    
+  do{
+    endy = floor(random(0,rows-1));
+  }while (endy == starty)
+  
+  reset();
+}
+
 function dia(){
   if(!run)
     diagonal = !diagonal;
 }
 
 function reset(){
-//   console.log("HEKLOODJS");
   diagonal = checkbox.checked();
   input1.value(cols);
   w = width/cols;
@@ -151,8 +179,32 @@ function reset(){
     }
   }
   
-  start = grid[0][0];
-  end = grid[cols - 1][rows - 1];
+  // startx = 0;
+  // starty = 0;
+  // endx = cols -5;
+  // endy = rows - 5;
+  
+  if(startx < 0){
+      startx = cols -1
+  }
+  if(starty < 0){
+    starty = cols -1
+  }
+  if(endx < 0){
+    endx = cols -1
+  }
+  if(endy < 0){
+    endy = cols -1
+  }
+  
+  qSet = [];
+  nSet = [];
+  cSet = [];
+  sSet = [];
+  noSolD = 0;
+  
+  start = grid[startx][starty];
+  end = grid[endx][endy];
   start.wall = false;
   end.wall = false;
   
@@ -162,6 +214,18 @@ function reset(){
   ran = false;
   noSol = false;
   maze = false;
+  
+  // sel.option('A*');
+  // sel.option('Dijkstra');
+  sel = createSelect();
+  sel.position(273, 452);
+  sel.option('A*');
+  sel.option('Dijkstra');
+  if(!aStar){
+    sel.selected('Dijkstra');
+  }
+  sel.changed(mySelectEvent);
+  
   loop();
   
   
@@ -174,6 +238,19 @@ function colRow(){
       cols = int(inp) + 1;
     }else{
       cols = int(inp);
+    }
+    
+    if(startx > cols){
+      startx = cols -1
+    }
+    if(starty > cols){
+      starty = cols -1
+    }
+    if(endx > cols){
+      endx = cols -1
+    }
+    if(endy > cols){
+      endy = cols -1
     }
     
     rows = cols;
@@ -214,8 +291,15 @@ function removeWalls(a, b){
 }
 
 function mazeGen(){
+  starty = 0;
+  startx = 0;
+  endx = cols -1;
+  endy = rows - 1;
+  
   reset();
+  
   maze = true;
+  
   for(var i = 0; i < cols; i++){
     for(var j = 0; j < rows; j++){
       grid[i][j].wall = true;
@@ -286,7 +370,7 @@ function preRunSetup(){
           var curGrid = grid[i][j];
           if(mouseX >= curGrid.i * w && mouseX <= (curGrid.i*w + w-1) && mouseY >= curGrid.j*h && mouseY <= (curGrid.j*h + h - 1)){
             curGrid.show(color(0,255,0));
-            if(mouseIsPressed){
+            if(mouseIsPressed && curGrid != start && curGrid != end){
               curGrid.wall = true;
             }
           }else{
@@ -304,8 +388,9 @@ function preRunSetup(){
 }
 
 function aStarAlg(){
-  
   if(run){
+    sel.disable('Dijkstra');
+    
     if(neigh){
       for(var i = 0; i < cols; i++){
         for(var j = 0; j < rows; j++){
@@ -411,6 +496,108 @@ function aStarAlg(){
   }
 }
 
+function dijkstraAlg(){
+  if(!run){
+    var c = 0;
+    for(var i = 0; i < cols; i++){
+      for(var j = 0; j < rows; j++){
+        qSet[c] = grid[i][j];
+        c++;
+      }
+    }
+  }
+  
+  if(run){
+    sel.disable('A*');
+    
+    if(neigh){
+      for(var i = 0; i < cols; i++){
+        for(var j = 0; j < rows; j++){
+          grid[i][j].addNeighbours(grid);
+        }
+      }
+      neigh = false;
+    }
+    
+    start.dist = 0;
+    
+    if(qSet.length > 0){
+      var u = qSet[0];
+      for(var i = 1; i < qSet.length; i++){
+        if(qSet[i].dist < u.dist){
+          u = qSet[i];
+        }
+      }  
+      
+      removeFromArray(qSet,u);
+      cSet.push(u);
+      
+      var neighbours = u.neighbours;
+      for(var i = 0; i < neighbours.length; i++){
+        var v = neighbours[i];
+        nSet.push(v);
+        
+        if(u == end){
+          console.log("DONE")
+          // if(u.prev){
+          //   while(u.prev){
+          //     sSet.push(u);
+          //     u = u.prev;
+          //   }
+          // }
+          // for(var j = 0; j < sSet.length; j++){
+          //   sSet[j].show(color(0,130,255));
+          // }
+          noLoop();
+        }
+        
+        
+        if(qSet.includes(v) && !v.wall){
+          var alt = dist(u.i,u.j,v.i,v.j) + u.dist;
+          if(alt < v.dist){
+            v.dist = alt;
+            v.prev = u;
+          }
+        }
+      }
+    }
+    
+    sSet = [start];
+    while(u.prev){
+      sSet.push(u);
+      u = u.prev;
+    }
+    
+    if(sSet.length == 1 && noSolD == 1){
+       console.log("No Solution");
+        noLoop();
+    }
+    
+    noSolD = 1;
+
+    for(var i = 0; i < cols; i++){
+      for(var j = 0; j < rows; j++){
+        grid[i][j].show(color(255));
+      }
+    }
+    
+    for(var j = 0; j < nSet.length; j++){
+      nSet[j].show(color(0,255,0));
+    }
+    
+    for(var j = 0; j < cSet.length; j++){
+      cSet[j].show(color(255,0,0));
+    }  
+
+    end.show(color(255,0,0));
+    start.show(color(0,130,255));
+    
+    for(var j = 0; j < sSet.length; j++){
+      sSet[j].show(color(0,130,255));
+    }
+  }
+}
+
 function createInputs(){
   let runButton = createButton("Run");
   runButton.mousePressed(runP);
@@ -420,6 +607,9 @@ function createInputs(){
   
   let mazeButton = createButton("Maze");
   mazeButton.mousePressed(mazeGen);
+  
+  let ranPosButton = createButton("RanPos");
+  ranPosButton.mousePressed(ranPos);
   
   let resetButton = createButton("Reset");
   resetButton.mousePressed(reset);
@@ -445,6 +635,16 @@ function createInputs(){
   fr = createButton('Speed (fps)');
   fr.position(input2.x + input2.width, height + 70);
   fr.mousePressed(fps);
+  
+  sel = createSelect();
+  sel.position(273, 452);
+  sel.option('A*');
+  sel.option('Dijkstra');
+  sel.changed(mySelectEvent);
+}
+
+function mySelectEvent(){
+  aStar = !aStar;
 }
 
 function setup(){
@@ -470,8 +670,8 @@ function setup(){
     }
   }
   
-  start = grid[0][0];
-  end = grid[cols - 1][rows - 1];
+  start = grid[startx][starty];
+  end = grid[endx][endy];
   start.wall = false;
   end.wall = false;
   
@@ -490,11 +690,10 @@ function draw() {
   
   preRunSetup();
   
-  aStarAlg();
+  if(aStar){
+    aStarAlg();
+  }else{
+    dijkstraAlg();
+  }
 
 }
-
-
-
-
-
