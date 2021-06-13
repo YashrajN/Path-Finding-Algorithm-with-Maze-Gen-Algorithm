@@ -1,5 +1,7 @@
-var cols = 35;
-var rows = 35;
+var cols = 21;
+var rows = 21;
+var len = 600;
+var wid = 600;
 var startx = 0;
 var starty = 0;
 var endx = cols -1;
@@ -26,8 +28,11 @@ var qSet = [];
 var nSet = [];
 var cSet = [];
 var sSet = [];
+var ssSet = [];
 var noSolD = 0;
 var infinity = 100000;
+var live = false;
+var real = true;
 
 function Spot(i,j){
     this.i = i;
@@ -153,8 +158,20 @@ function dia(){
     diagonal = !diagonal;
 }
 
+function liveP(){
+  if(!run)
+    live = !live;
+}
+
+function realT(){
+  if(!run && !maze)
+    real = !real;
+}
+
 function reset(){
   diagonal = checkbox.checked();
+  live = checkboxL.checked();
+  real = checkboxR.checked();
   input1.value(cols);
   w = width/cols;
   h = height/rows;
@@ -201,6 +218,7 @@ function reset(){
   nSet = [];
   cSet = [];
   sSet = [];
+  ssSet = [];
   noSolD = 0;
   
   start = grid[startx][starty];
@@ -217,8 +235,9 @@ function reset(){
   
   // sel.option('A*');
   // sel.option('Dijkstra');
+  sel.remove();
   sel = createSelect();
-  sel.position(273, 452);
+  // sel.position(273, height + 2);
   sel.option('A*');
   sel.option('Dijkstra');
   if(!aStar){
@@ -309,7 +328,7 @@ function mazeGen(){
 }
 
 function createMaze(){
-  if(maze){
+  if(maze && real){
     ran = false;
     curr.visited = true;
     curr.wall = false;
@@ -331,6 +350,35 @@ function createMaze(){
     
     if(stack.length > 0){
       run = false;
+    }
+  }
+  
+  while(maze && !real){
+    ran = false;
+    curr.visited = true;
+    curr.wall = false;
+
+    var mNext = curr.checkNeighbours();
+
+    if(mNext){
+      mNext.visited = true;
+      
+      stack.push(curr);
+      
+      removeWalls(curr, mNext);
+      
+      curr = mNext;
+
+    }else if(stack.length > 0){
+      curr = stack.pop();
+    }
+    
+    if(stack.length > 0){
+      run = false;
+    }
+    
+    if(stack.length < 1){
+      maze = false;
     }
   }
 }
@@ -400,7 +448,8 @@ function aStarAlg(){
       neigh = false;
     }
     
-    if(openSet.length > 0){
+    var done = false;
+    while(openSet.length > 0 && !done && !real){
 
     var winner = 0;
     for(var i = 0; i < openSet.length; i++){
@@ -410,9 +459,20 @@ function aStarAlg(){
     }
 
     var current = openSet[winner];
-
+    
+    path = [start];
     if(openSet[winner] === end){ 
-      console.log("DONE!");
+      // console.log("DONE!");
+      done = true;
+      if(!live){
+        path = [];
+        var temp = current;
+        path.push(temp)
+        while(temp.previous){
+          path.push(temp.previous);
+          temp = temp.previous;
+        }
+      }
       noLoop();  
     }
 
@@ -452,8 +512,80 @@ function aStarAlg(){
       }
     }
     //Keep going
-  } else {
-    console.log("No Solution");
+  } 
+    
+  if(openSet.length == 0 && !done && !real) {
+    // console.log("No Solution");
+    noSol = true;
+    noLoop();
+    // return;
+    //No Solution
+  }
+    
+  if(openSet.length > 0 && real){
+
+    var winner = 0;
+    for(var i = 0; i < openSet.length; i++){
+      if(openSet[i].f < openSet[winner].f){
+        winner = i;
+      }
+    }
+
+    var current = openSet[winner];
+    
+    path = [start];
+    if(openSet[winner] === end){ 
+      // console.log("DONE!");
+      if(!live){
+        path = [];
+        var temp = current;
+        path.push(temp)
+        while(temp.previous){
+          path.push(temp.previous);
+          temp = temp.previous;
+        }
+      }
+      noLoop();  
+    }
+
+    // openSet.remove(current);
+    removeFromArray(openSet,current);
+    closedSet.push(current);
+
+    var neighbours = current.neighbours;
+    for(var i = 0; i < neighbours.length; i++){
+      var neighbour = neighbours[i];
+
+      if(!closedSet.includes(neighbour) && !neighbour.wall){
+        if(diagonal){
+          var tempG = current.g + heuristic(neighbour,current);
+        }else{
+          var tempG = current.g + 1;
+        }
+
+        var newPath = false;
+
+        if(openSet.includes(neighbour)){
+          if(tempG < neighbour.g){
+            neighbour.g = tempG;
+            newPath = true;
+          }
+        }else{
+          neighbour.g = tempG;
+          newPath = true;
+          openSet.push(neighbour);
+        }
+
+        if(newPath){
+          neighbour.h = heuristic(neighbour,end);
+          neighbour.f = neighbour.g + neighbour.h;
+          neighbour.previous = current;
+        }        
+      }
+    }
+    //Keep going
+  } else if (real) {
+    // console.log("No Solution");
     noSol = true;
     noLoop();
     // return;
@@ -476,7 +608,7 @@ function aStarAlg(){
       openSet[i].show(color(0,255,0));
     }
 
-    if(!noSol){
+    if(!noSol && live){
       //Find Path    
       path = [];
       var temp = current;
@@ -521,7 +653,7 @@ function dijkstraAlg(){
     
     start.dist = 0;
     
-    if(qSet.length > 0){
+    if(qSet.length > 0 && real){
       var u = qSet[0];
       for(var i = 1; i < qSet.length; i++){
         if(qSet[i].dist < u.dist){
@@ -538,16 +670,12 @@ function dijkstraAlg(){
         nSet.push(v);
         
         if(u == end){
-          console.log("DONE")
-          // if(u.prev){
-          //   while(u.prev){
-          //     sSet.push(u);
-          //     u = u.prev;
-          //   }
-          // }
-          // for(var j = 0; j < sSet.length; j++){
-          //   sSet[j].show(color(0,130,255));
-          // }
+          // console.log("DONE")
+          sSet = [start];
+          while(u.prev && !live){
+            sSet.push(u);
+            u = u.prev;
+          }
           noLoop();
         }
         
@@ -562,43 +690,119 @@ function dijkstraAlg(){
       }
     }
     
-    sSet = [start];
+    var doneD = false;
+    while(qSet.length > 0 && !real && !doneD){
+      var u = qSet[0];
+      for(var i = 1; i < qSet.length; i++){
+        if(qSet[i].dist < u.dist){
+          u = qSet[i];
+        }
+      }
+      
+      removeFromArray(qSet,u);
+      cSet.push(u);
+      
+      var neighbours = u.neighbours;
+      for(var i = 0; i < neighbours.length; i++){
+        var v = neighbours[i];
+        nSet.push(v);
+        
+        if(u == end){
+          // console.log("DONE")
+          done = true;
+          sSet = [start];
+          while(u.prev){
+            sSet.push(u);
+            u = u.prev;
+          }
+          
+          for(var i = 0; i < cols; i++){
+            for(var j = 0; j < rows; j++){
+              grid[i][j].show(color(255));
+            }
+          }
+
+          for(var j = 0; j < nSet.length; j++){
+            nSet[j].show(color(0,255,0));
+          }
+
+          for(var j = 0; j < cSet.length; j++){
+            cSet[j].show(color(255,0,0));
+          }
+          end.show(color(255,0,0));
+          for(var j = 0; j < sSet.length; j++){
+            sSet[j].show(color(0,130,255));
+          }
+          noLoop();
+        }
+        
+        
+        if(qSet.includes(v) && !v.wall){
+          var alt = dist(u.i,u.j,v.i,v.j) + u.dist;
+          if(alt < v.dist){
+            v.dist = alt;
+            v.prev = u;
+          }
+        }
+      }
+    }
+    
+    ssSet = [start];
     while(u.prev){
-      sSet.push(u);
+      ssSet.push(u);
       u = u.prev;
     }
     
-    if(sSet.length == 1 && noSolD == 1){
-       console.log("No Solution");
+    if(ssSet.length == 1 && noSolD == 1){
+       // console.log("No Solution");
         noLoop();
     }
     
     noSolD = 1;
+    if(real){
+      for(var i = 0; i < cols; i++){
+        for(var j = 0; j < rows; j++){
+          grid[i][j].show(color(255));
+        }
+      }
 
-    for(var i = 0; i < cols; i++){
-      for(var j = 0; j < rows; j++){
-        grid[i][j].show(color(255));
+      for(var j = 0; j < nSet.length; j++){
+        nSet[j].show(color(0,255,0));
+      }
+
+      for(var j = 0; j < cSet.length; j++){
+        cSet[j].show(color(255,0,0));
+      } 
+      end.show(color(255,0,0));
+      if(live){
+        for(var j = 0; j < ssSet.length; j++){
+          ssSet[j].show(color(0,130,255));
+        }
+      }else{
+        for(var j = 0; j < sSet.length; j++){
+          sSet[j].show(color(0,130,255));
+        }
       }
     }
     
-    for(var j = 0; j < nSet.length; j++){
-      nSet[j].show(color(0,255,0));
-    }
-    
-    for(var j = 0; j < cSet.length; j++){
-      cSet[j].show(color(255,0,0));
-    }  
-
-    end.show(color(255,0,0));
     start.show(color(0,130,255));
     
-    for(var j = 0; j < sSet.length; j++){
-      sSet[j].show(color(0,130,255));
-    }
   }
 }
 
 function createInputs(){
+  checkbox = createCheckbox('Diagonal', false);
+  checkbox.changed(dia);
+  checkbox.position(4, 120);
+  
+  checkboxL = createCheckbox('Live Path Update', false);
+  checkboxL.changed(liveP);
+  checkboxL.position(4, 150);
+  
+  checkboxR = createCheckbox('Real-Time', true);
+  checkboxR.changed(realT);
+  checkboxR.position(4, 180);
+  
   let runButton = createButton("Run");
   runButton.mousePressed(runP);
   
@@ -616,31 +820,29 @@ function createInputs(){
   
   
   input1 = createInput();
-  input1.position(0, height + 45);
+  // input1.position(0, height + 45);
   input1.value(cols);
 
   button = createButton('Grid');
-  button.position(input1.x + input1.width, height + 45);
+  // button.position(input1.x + input1.width, height + 45);
   button.mousePressed(colRow);
   
   
-  checkbox = createCheckbox('Diagonal', false);
-  checkbox.changed(dia);
-  
-  
   input2 = createInput();
-  input2.position(0, height + 70);
+  // input2.position(0, height + 70);
   input2.value(60);
 
   fr = createButton('Speed (fps)');
-  fr.position(input2.x + input2.width, height + 70);
+  // fr.position(input2.x + input2.width, height + 70);
   fr.mousePressed(fps);
   
   sel = createSelect();
-  sel.position(273, 452);
+  // sel.position(273, height + 2);
   sel.option('A*');
   sel.option('Dijkstra');
   sel.changed(mySelectEvent);
+  
+  
 }
 
 function mySelectEvent(){
@@ -648,7 +850,7 @@ function mySelectEvent(){
 }
 
 function setup(){
-  createCanvas(450, 450);  
+  createCanvas(wid, len);  
   
   w = width/cols;
   h = height/rows;
@@ -677,7 +879,7 @@ function setup(){
   
   openSet.push(start);
   
-  console.log(grid);
+  // console.log(grid);
   
   createInputs();
   
