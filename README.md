@@ -1,4 +1,4 @@
-#Instructions
+# Instructions
 ## Customization
 The user can draw walls with their mouse, change pathfinding algorithms using the drop-down menu and change the way the path is visualized using the checkboxes on the left.
 ### Check boxes
