@@ -1,3 +1,4 @@
+//FINAL VERSION
 var cols = 21;
 var rows = 21;
 var len = 600;
@@ -52,7 +53,7 @@ function Spot(i,j){
       if(this.wall){
         fill(30);
       }
-      stroke(0);
+      stroke(150);
       rect(this.i*w,this.j*h,w-1,h-1)
     }
     
@@ -818,6 +819,10 @@ function createInputs(){
   let resetButton = createButton("Reset");
   resetButton.mousePressed(reset);
   
+  // textSize(15)
+  let a = createA('https://github.com/YashrajN/Path-Finding-Algorithm-with-Maze-Gen-Algorithm/wiki/Instructions', 'Instructions', '_blank');
+  a.position(28, 220);;
+  
   
   input1 = createInput();
   // input1.position(0, height + 45);
@@ -886,7 +891,7 @@ function setup(){
 }
 
 function draw() {
-  // background(255);
+  // background(150);
   
   createMaze();
   

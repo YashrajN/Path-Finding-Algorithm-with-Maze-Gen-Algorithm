@@ -1,7 +1,70 @@
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
-canvas {
+/* canvas {
   display: block;
+} */
+
+a {
+  /*   height: 25px;
+  width: 65px; */
+  font-size: 20px;
+  color: black;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+canvas {
+  padding: 0;
+  margin: auto;
+  margin-top: 100px;
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 10px;
+}
+
+button {
+  margin: auto;
+  position: auto;
+  width: auto;
+  min-width: 11%;
+  padding: 15px;
+  font-size: 20px;
+  /*   top: 10px;
+  bottom: 10px;
+  left: 10px;
+  right: 10px; */
+}
+
+select {
+  margin: auto;
+  position: auto;
+  width: auto;
+  min-width: 10%;
+  padding: 16px;
+  font-size: 20px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+input {
+  /*   margin: auto; */
+  /*   width: 20%; */
+  padding: 15px;
+  /*   position: absolute; */
+  /*   top: 0;
+  left: 0; */
+  height: 25px;
+  width: 65px;
+  font-size: 20px;
 }
